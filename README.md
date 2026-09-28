@@ -26,7 +26,7 @@ The file appears in `app/build/outputs/apk/debug/`.
 ## Notes
 
 - This is a *debug-signed* APK: fine for installing on your own phone, not for Google Play.
-- Order classification, routing, tickets and Odysseus run fully on-device.
+- Order classification, routing, tickets and quantai run fully on-device.
 - Voice-to-text uses Android's speech service, which on many phones needs a
   connection to transcribe. Typing always works offline.
 - Order history is stored inside the app (cleared if you uninstall it).
