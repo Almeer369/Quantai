@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QANTAI — Office Operations Console</title>
+
+<meta name="theme-color" content="#05080B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Qantai">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05080B;
+    --bg2:#070C11;
+    --panel:rgba(13,21,28,0.72);
+    --panel-border:rgba(45,226,230,0.18);
+    --cyan:#2DE2E6;
+    --cyan-dim:rgba(45,226,230,0.35);
+    --cyan-glow:0 0 14px rgba(45,226,230,0.55);
+    --text:#DCEEF0;
+    --muted:#5C7480;
+    --ok:#4CE0A0;
+    --warn:#FFC857;
+    --danger:#FF5D73;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --sans:'Rajdhani', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--text);
+    font-family:var(--sans);}
+  body{
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(45,226,230,0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(45,226,230,0.05), transparent 40%),
+      linear-gradient(var(--bg2) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg2) 1px, transparent 1px);
+    background-size:auto,auto,34px 34px,34px 34px;
+    background-color:var(--bg);
+  }
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(45,226,230,0.25);border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .panel{
+    position:relative;background:var(--panel);border:1px solid var(--panel-border);
+    border-radius:8px;backdrop-filter:blur(6px);
+  }
+  .panel::before,.panel::after{
+    content:"";position:absolute;width:14px;height:14px;pointer-events:none;
+    border-color:var(--cyan-dim);
+  }
+  .panel::before{top:-1px;left:-1px;border-top:2px solid;border-left:2px solid;}
+  .panel::after{bottom:-1px;right:-1px;border-bottom:2px solid;border-right:2px solid;}
+
+  .panel-title{
+    font-family:var(--sans);font-weight:700;font-size:13px;letter-spacing:2px;
+    color:var(--cyan);margin:0 0 10px;text-transform:uppercase;
+  }
+
+  header.topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 24px;flex-wrap:wrap;gap:8px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--sans);}
+  .brand .name{font-size:22px;font-weight:700;letter-spacing:3px;color:var(--text);}
+  .brand .sub{font-size:11px;color:var(--muted);letter-spacing:2px;margin-left:4px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);
+    box-shadow:0 0 8px var(--ok);}
+  .dot.pulse{animation:pulseDot 1.8s ease-in-out infinite;}
+  @keyframes pulseDot{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+  .brainmode{
+    font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--muted);
+    border:1px solid var(--panel-border);border-radius:20px;padding:6px 14px;
+  }
+
+  main.layout{
+    display:flex;gap:16px;padding:0 20px 20px;align-items:flex-start;flex-wrap:wrap;
+  }
+  .col-left{flex:0 0 200px;padding:16px;}
+  .col-center{flex:1 1 420px;display:flex;flex-direction:column;gap:14px;min-width:320px;}
+  .col-right{flex:0 0 340px;padding:16px;max-height:640px;display:flex;flex-direction:column;}
+
+  /* ---- left dept nav ---- */
+  .dept-nav{list-style:none;margin:0;padding:0;position:relative;}
+  .dept-nav::before{
+    content:"";position:absolute;left:15px;top:6px;bottom:6px;width:1px;
+    background:linear-gradient(var(--cyan-dim), transparent 92%);
+  }
+  .dept-nav li{
+    display:flex;align-items:center;gap:10px;padding:9px 6px 9px 0;position:relative;
+    font-family:var(--sans);font-size:14px;font-weight:600;color:var(--muted);
+    transition:color .3s;
+  }
+  .dept-nav li .node{
+    width:31px;height:31px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;background:#0B131A;border:1px solid var(--panel-border);
+    font-size:14px;z-index:1;flex:0 0 auto;transition:border-color .3s, box-shadow .3s;
+  }
+  .dept-nav li.active{color:var(--text);}
+  .dept-nav li.active .node{border-color:var(--cyan);box-shadow:var(--cyan-glow);}
+
+  .ticker{margin-top:18px;}
+  .ticker-list{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:11px;}
+  .ticker-list li{
+    padding:7px 0;border-bottom:1px dashed rgba(92,116,128,0.25);color:var(--muted);
+    line-height:1.5;
+  }
+  .ticker-list li .t{color:var(--cyan);margin-right:6px;}
+  .ticker-list .empty{color:var(--muted);font-size:11px;}
+
+  /* ---- center: orbital + command bar ---- */
+  .orb-panel{padding:14px;display:flex;align-items:center;justify-content:center;}
+  svg#orbital{display:block;width:100%;max-width:460px;height:auto;}
+  .spoke{stroke:var(--panel-border);stroke-width:1.5;transition:stroke .3s, filter .3s;}
+  .spoke.active{stroke:var(--cyan);filter:drop-shadow(0 0 4px var(--cyan));}
+  .node-ring{fill:#0B131A;stroke:var(--panel-border);stroke-width:1.5;transition:stroke .3s, filter .3s;}
+  .node-ring.active{stroke:var(--cyan);filter:drop-shadow(0 0 6px var(--cyan));}
+  .node-icon{font-size:17px;text-anchor:middle;dominant-baseline:middle;}
+  .node-label{font-family:var(--mono);font-size:8.5px;fill:var(--muted);text-anchor:middle;
+    letter-spacing:.5px;}
+  .core-ring{fill:none;stroke:var(--cyan-dim);stroke-width:1;}
+  .core-ring.dash{stroke-dasharray:4 6;}
+  .core-fill{fill:#0B131A;stroke:var(--cyan);stroke-width:1.5;filter:drop-shadow(0 0 10px rgba(45,226,230,0.5));}
+  .core-label{font-family:var(--sans);font-size:11px;font-weight:700;fill:var(--cyan);
+    text-anchor:middle;letter-spacing:2px;}
+  #traveler{fill:var(--cyan);filter:drop-shadow(0 0 6px var(--cyan));transition:cx .8s ease, cy .8s ease;}
+  .bubble-rect{fill:#0B131A;stroke:var(--cyan);stroke-width:1;opacity:0;transition:opacity .25s;}
+  .bubble-text{fill:var(--text);font-family:var(--mono);font-size:9.5px;text-anchor:middle;
+    opacity:0;transition:opacity .25s;}
+  .bubble-rect.show,.bubble-text.show{opacity:1;}
+  @media (prefers-reduced-motion: no-preference){
+    .ring-rotate{animation:spin 40s linear infinite;transform-origin:240px 240px;}
+    .ring-rotate-rev{animation:spin 60s linear infinite reverse;transform-origin:240px 240px;}
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .commandbar{display:flex;gap:10px;padding:12px;align-items:center;}
+  .mic-btn{
+    flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:1px solid var(--cyan-dim);
+    background:#0B131A;color:var(--cyan);font-size:18px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:box-shadow .2s;
+  }
+  .mic-btn:hover{box-shadow:var(--cyan-glow);}
+  .mic-btn.listening{box-shadow:var(--cyan-glow);animation:pulseDot 1s infinite;}
+  #orderInput{
+    flex:1;min-width:120px;background:#0B131A;border:1px solid var(--panel-border);
+    border-radius:24px;color:var(--text);padding:12px 18px;font-family:var(--mono);
+    font-size:13px;
+  }
+  #orderInput:focus{outline:none;border-color:var(--cyan);}
+  .send-btn{
+    flex:0 0 auto;background:var(--cyan);color:#03181A;border:none;border-radius:24px;
+    padding:0 22px;font-family:var(--sans);font-weight:700;letter-spacing:1px;font-size:13px;
+    cursor:pointer;height:46px;
+  }
+
+  .status{
+    font-family:var(--mono);font-size:12px;color:var(--muted);padding:0 6px;min-height:16px;
+  }
+  .status .flag{color:var(--cyan);}
+
+  /* ---- right: order log ---- */
+  .log-header{display:flex;align-items:center;justify-content:space-between;}
+  .stat{font-family:var(--mono);font-size:10.5px;color:var(--ok);border:1px solid rgba(76,224,160,.3);
+    border-radius:12px;padding:3px 10px;}
+  .log-feed{flex:1;overflow-y:auto;margin-top:8px;padding-right:2px;}
+  .entry{
+    font-family:var(--mono);font-size:11px;border-left:2px solid var(--panel-border);
+    padding:8px 0 8px 10px;margin-bottom:10px;
+  }
+  .entry .l1{display:flex;justify-content:space-between;color:var(--text);font-weight:600;}
+  .entry .l1 .num{color:var(--cyan);}
+  .entry .status-received{color:var(--muted);}
+  .entry .status-in_progress{color:var(--warn);}
+  .entry .status-completed{color:var(--ok);}
+  .entry .summary{color:var(--text);margin:4px 0;opacity:.9;}
+  .entry .l2{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;}
+  .entry .priority-Low{color:var(--ok);}
+  .entry .priority-Medium{color:var(--warn);}
+  .entry .priority-High{color:var(--danger);}
+  .entry .ts{color:var(--muted);font-size:9.5px;margin-top:3px;}
+  .entry .odysseus{color:var(--cyan);margin:2px 0 4px;line-height:1.5;opacity:.95;}
+  .entry .odysseus b{letter-spacing:1px;font-family:var(--sans);font-size:11px;}
+  .log-feed .empty{color:var(--muted);font-size:12px;font-family:var(--mono);padding:10px 0;}
+
+  footer{
+    padding:10px 24px 20px;color:var(--muted);font-family:var(--mono);font-size:10.5px;
+  }
+  footer a{color:var(--cyan);}
+
+  @media (max-width:900px){
+    main.layout{flex-direction:column;}
+    .col-left{order:2;flex:1 1 auto;width:100%;}
+    .col-center{order:1;flex:1 1 auto;width:100%;}
+    .col-right{order:3;flex:1 1 auto;width:100%;max-height:360px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="dot pulse"></span>
+    <span class="name">QANTAI</span>
+    <span class="sub">OFFICE OPERATIONS CONSOLE · QANTAI HUB + ODYSSEUS EXEC</span>
+  </div>
+  <div class="brainmode" id="modeLabel">BRAIN · OFFLINE (BUILT-IN)</div>
+</header>
+
+<main class="layout">
+
+  <aside class="col-left panel">
+    <h2 class="panel-title">Departments</h2>
+    <ul class="dept-nav" id="deptNav"></ul>
+    <div class="ticker">
+      <h2 class="panel-title">Office Feed</h2>
+      <ul class="ticker-list" id="tickerList"><li class="empty">No activity yet.</li></ul>
+    </div>
+  </aside>
+
+  <section class="col-center">
+    <div class="panel orb-panel">
+      <svg id="orbital" viewBox="0 0 480 480"></svg>
+    </div>
+    <div class="panel commandbar">
+      <button class="mic-btn" id="micBtn" title="Voice order">🎤</button>
+      <input id="orderInput" type="text" placeholder="Type an order, or tap the mic for Qantai…" />
+      <button class="send-btn" id="sendBtn">SEND</button>
+    </div>
+    <div class="status" id="statusLine">Ready for your order.</div>
+  </section>
+
+  <aside class="col-right panel">
+    <div class="log-header">
+      <h2 class="panel-title">Order Log</h2>
+      <span class="stat" id="todayStat">TODAY · 0</span>
+    </div>
+    <div class="log-feed" id="logFeed"><div class="empty">// no orders processed this session</div></div>
+  </aside>
+
+</main>
+
+<footer>
+  Runs entirely on this phone — orders are classified on-device and saved to this device only (no server, no account). <span id="summaryLink" style="cursor:pointer;text-decoration:underline;color:var(--cyan);">View today's summary →</span>
+</footer>
+
+<script>
+/* ---------------------------------------------------------------------
+   Department layout (mirrors the desktop app's config.py)
+--------------------------------------------------------------------- */
+const DEPT_ORDER = ["reception","manager_cabin","conference_room","workstations",
+                    "communication_hub","storage_room","break_area","analytics_desk"];
+const DEPARTMENTS = {
+  reception:          { label:"Reception",          icon:"🚪" },
+  manager_cabin:       { label:"Manager's Cabin",    icon:"🗂️" },
+  conference_room:     { label:"Conference Room",    icon:"📅" },
+  workstations:        { label:"Workstations",       icon:"💻" },
+  communication_hub:   { label:"Comms Hub",          icon:"💬" },
+  storage_room:        { label:"Storage Room",       icon:"📦" },
+  break_area:          { label:"Break Area",         icon:"☕" },
+  analytics_desk:      { label:"Analytics Desk",     icon:"📊" },
+};
+
+const ORDER_TYPES = {
+  MEETING:  { department:"conference_room",   priority:"Medium" },
+  TASK:     { department:"workstations",      priority:"Medium" },
+  DOCUMENT: { department:"workstations",      priority:"Medium" },
+  MESSAGE:  { department:"communication_hub", priority:"Low" },
+  SUPPLY:   { department:"storage_room",      priority:"Low" },
+  REPORT:   { department:"analytics_desk",    priority:"Medium" },
+};
+
+const KEYWORDS = {
+  MEETING: ["meeting","schedule","calendar","conference","call with","book time","sync","1:1","one on one","standup","appointment"],
+  SUPPLY: ["coffee","tea","snack","order supplies","stationery","printer paper","ink","toner","pens","water bottle","supply","inventory","restock","equipment"],
+  REPORT: ["report","analytics","dashboard","chart","numbers","performance","status update","kpi"],
+  MESSAGE: ["message","notify","email","tell the team","announce","send a note","alert","let everyone know","broadcast"],
+  DOCUMENT: ["document","print","draft","edit","file","spreadsheet","presentation","contract","invoice","share the doc"],
+  TASK: ["assign","task","todo","to-do","deadline","follow up","remind","please handle","get this done"],
+};
+const URGENT = ["asap","urgent","immediately","right now","emergency","critical"];
+const LOWP = ["whenever","no rush","low priority","sometime"];
+
+/* ---------------------------------------------------------------------
+   ODYSSEUS — execution layer.
+   Qantai (intake hub) classifies + routes an order to a department.
+   Odysseus is the worker that carries it out there and reports back.
+   (Simulated: swap these for real calendar/inventory/email calls.)
+--------------------------------------------------------------------- */
+const ODYSSEUS_TEMPLATES = {
+  conference_room:   "Calendar invite drafted and sent to all attendees. Room booked, agenda attached.",
+  workstations:      "Logged on the team board, assigned with a due date, starter checklist generated.",
+  communication_hub: "Message drafted and queued for broadcast to the relevant channel.",
+  storage_room:      "Inventory checked, supply requisition submitted, restock ETA logged.",
+  analytics_desk:    "Pulled data from the latest reporting period; key metrics compiled into a summary.",
+  reception:         "Visitor logged at the front desk; host notified.",
+  manager_cabin:     "Flagged for manager review and added to the approvals queue.",
+  break_area:        "Refreshment request logged; break area notified.",
+};
+function odysseusExecute(order){
+  return ODYSSEUS_TEMPLATES[order.department] || "Request completed.";
+}
+
+function classify(text){
+  const lowered = text.toLowerCase();
+  const scores = {}; for (const k in KEYWORDS) scores[k]=0;
+  for (const k in KEYWORDS) for (const w of KEYWORDS[k]) if (lowered.includes(w)) scores[k]++;
+  let best = Object.keys(scores).reduce((a,b)=> scores[b]>scores[a]?b:a, "TASK");
+  if (scores[best]===0) best = "TASK";
+  let priority = ORDER_TYPES[best].priority;
+  if (URGENT.some(w=>lowered.includes(w))) priority="High";
+  else if (LOWP.some(w=>lowered.includes(w))) priority="Low";
+  let summary = text.trim();
+  if (summary.length>70) summary = summary.slice(0,67).trimEnd()+"...";
+  const dept = DEPARTMENTS[ORDER_TYPES[best].department].label;
+  return { order_type:best, summary, priority, response:`Order received: ${summary}. Sending to the ${dept} now.` };
+}
+
+/* ---------------------------------------------------------------------
+   Left nav
+--------------------------------------------------------------------- */
+const deptNav = document.getElementById("deptNav");
+const navItems = {};
+for (const key of DEPT_ORDER){
+  const info = DEPARTMENTS[key];
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="node">${info.icon}</span><span>${info.label}</span>`;
+  deptNav.appendChild(li);
+  navItems[key] = li;
+}
+
+/* ---------------------------------------------------------------------
+   Orbital diagram (SVG)
+--------------------------------------------------------------------- */
+const svg = document.getElementById("orbital");
+const CX=240, CY=240, CORE_R=46, NODE_R=168;
+const NS = "http://www.w3.org/2000/svg";
+const spokes={}, nodeRings={}, nodeCenters={};
+let traveler, bubbleRect, bubbleText, revertTimer;
+
+function el(tag, attrs){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function buildOrbital(){
+  // decorative rotating rings
+  const ringGroup1 = el("circle",{cx:CX,cy:CY,r:NODE_R+26,class:"core-ring dash ring-rotate"});
+  const ringGroup2 = el("circle",{cx:CX,cy:CY,r:NODE_R+40,class:"core-ring dash ring-rotate-rev"});
+  svg.appendChild(ringGroup1); svg.appendChild(ringGroup2);
+
+  // spokes first (so nodes draw on top)
+  const n = DEPT_ORDER.length;
+  DEPT_ORDER.forEach((key,i)=>{
+    const angle = -90 + i*(360/n);
+    const rad = angle*Math.PI/180;
+    const x = CX + NODE_R*Math.cos(rad);
+    const y = CY + NODE_R*Math.sin(rad);
+    nodeCenters[key]=[x,y];
+
+    const spoke = el("line",{x1:CX,y1:CY,x2:x,y2:y,class:"spoke"});
+    svg.appendChild(spoke);
+    spokes[key]=spoke;
+  });
+
+  // core
+  svg.appendChild(el("circle",{cx:CX,cy:CY,r:CORE_R,class:"core-fill"}));
+  const coreLabel = el("text",{x:CX,y:CY-3,class:"core-label"});
+  coreLabel.textContent = "QANTAI";
+  svg.appendChild(coreLabel);
+  const coreSub = el("text",{x:CX,y:CY+12,class:"core-label"});
+  coreSub.setAttribute("font-size","8"); coreSub.setAttribute("letter-spacing","1.5");
+  coreSub.style.fill = "var(--muted)";
+  coreSub.textContent = "AI CORE";
+  svg.appendChild(coreSub);
+
+  // department nodes on top
+  DEPT_ORDER.forEach((key)=>{
+    const [x,y] = nodeCenters[key];
+    const info = DEPARTMENTS[key];
+    const ring = el("circle",{cx:x,cy:y,r:26,class:"node-ring"});
+    svg.appendChild(ring);
+    nodeRings[key]=ring;
+    const icon = el("text",{x:x,y:y-2,class:"node-icon"});
+    icon.textContent = info.icon;
+    svg.appendChild(icon);
+    const label = el("text",{x:x,y:y+38,class:"node-label"});
+    label.textContent = info.label.toUpperCase();
+    svg.appendChild(label);
+  });
+
+  traveler = el("circle",{cx:CX,cy:CY,r:6,id:"traveler"});
+  svg.appendChild(traveler);
+}
+buildOrbital();
+
+function routeOrderTo(deptKey, ticketText){
+  clearTimeout(revertTimer);
+  const [tx,ty] = nodeCenters[deptKey] || Object.values(nodeCenters)[0];
+
+  spokes[deptKey].classList.add("active");
+  traveler.setAttribute("cx", tx);
+  traveler.setAttribute("cy", ty);
+
+  Object.values(navItems).forEach(li=>li.classList.remove("active"));
+  navItems[deptKey].classList.add("active");
+
+  setTimeout(()=>{
+    nodeRings[deptKey].classList.add("active");
+
+    if (bubbleRect){ bubbleRect.remove(); bubbleText.remove(); }
+    bubbleText = el("text",{x:tx,y:ty-48,class:"bubble-text"});
+    bubbleText.textContent = ticketText.length>24 ? ticketText.slice(0,23)+"…" : ticketText;
+    svg.appendChild(bubbleText);
+    const bbox = bubbleText.getBBox();
+    bubbleRect = el("rect",{x:bbox.x-9,y:bbox.y-5,width:bbox.width+18,height:bbox.height+10,
+      rx:4,class:"bubble-rect"});
+    svg.insertBefore(bubbleRect, bubbleText);
+    requestAnimationFrame(()=>{ bubbleRect.classList.add("show"); bubbleText.classList.add("show"); });
+
+    revertTimer = setTimeout(()=>{
+      spokes[deptKey].classList.remove("active");
+      nodeRings[deptKey].classList.remove("active");
+      if(bubbleRect){bubbleRect.classList.remove("show"); bubbleText.classList.remove("show");}
+      traveler.setAttribute("cx", CX);
+      traveler.setAttribute("cy", CY);
+      Object.values(navItems).forEach(li=>li.classList.remove("active"));
+    }, 2600);
+  }, 800);
+}
+
+/* ---------------------------------------------------------------------
+   Orders + persistence
+--------------------------------------------------------------------- */
+const STORAGE_KEY = "qantai_order_history";
+let orders = [];
+let nextNumber = 1;
+
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw){
+      orders = JSON.parse(raw);
+      nextNumber = orders.reduce((m,o)=>Math.max(m,o.number),0)+1;
+    }
+  }catch(e){ orders = []; }
+  renderLog(); renderTicker();
+}
+function saveHistory(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(orders)); }catch(e){}
+}
+
+function statusText(s){ return {received:"RECEIVED", in_progress:"IN PROGRESS", completed:"COMPLETED"}[s]||s; }
+
+function renderLog(){
+  const feed = document.getElementById("logFeed");
+  feed.innerHTML = "";
+  if (orders.length===0){
+    feed.innerHTML = '<div class="empty">// no orders processed this session</div>';
+  } else {
+    for (const o of orders.slice(0,60)){
+      const dept = DEPARTMENTS[o.department];
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = `
+        <div class="l1"><span><span class="num">#${String(o.number).padStart(4,"0")}</span> ${o.order_type}</span><span class="status-${o.status}">${statusText(o.status)}</span></div>
+        <div class="summary">${escapeHtml(o.summary)}</div>
+        ${o.note ? `<div class="odysseus">↳ <b>ODYSSEUS</b> ${escapeHtml(o.note)}</div>` : ""}
+        <div class="l2"><span>${dept.icon} ${dept.label}</span><span class="priority-${o.priority}">${o.priority.toUpperCase()}</span></div>
+        <div class="ts">${o.timestamp}</div>`;
+      feed.appendChild(div);
+    }
+  }
+  const today = new Date().toISOString().slice(0,10);
+  const todayCount = orders.filter(o=>o.timestamp.startsWith(today)).length;
+  document.getElementById("todayStat").textContent = `TODAY · ${todayCount}`;
+}
+
+function renderTicker(){
+  const list = document.getElementById("tickerList");
+  list.innerHTML = "";
+  if (orders.length===0){
+    list.innerHTML = '<li class="empty">No activity yet.</li>';
+    return;
+  }
+  for (const o of orders.slice(0,6)){
+    const li = document.createElement("li");
+    const time = o.timestamp.slice(11,16);
+    li.innerHTML = `<span class="t">${time}</span>${escapeHtml(o.summary)}`;
+    list.appendChild(li);
+  }
+}
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function processOrder(text){
+  text = text.trim();
+  if (!text) return;
+  setStatus(`Order received: "${text}". Processing now...`);
+
+  const result = classify(text);
+  const dept = ORDER_TYPES[result.order_type].department;
+  const order = {
+    number: nextNumber++,
+    timestamp: new Date().toISOString().slice(0,19).replace("T"," "),
+    raw_text: text,
+    order_type: result.order_type,
+    department: dept,
+    priority: result.priority,
+    status: "received",
+    summary: result.summary,
+  };
+  orders.unshift(order);
+  saveHistory();
+  renderLog(); renderTicker();
+
+  setStatus(result.response);
+  speak(result.response);
+
+  routeOrderTo(dept, `#${String(order.number).padStart(4,"0")} ${order.order_type}`);
+
+  setTimeout(()=>{ order.status="in_progress"; saveHistory(); renderLog(); }, 800);
+  setTimeout(()=>{
+    order.note = odysseusExecute(order);   // Odysseus carries out what Qantai routed
+    order.status="completed"; saveHistory(); renderLog(); renderTicker();
+    setStatus(`Done! Order #${String(order.number).padStart(4,"0")} sent to the ${DEPARTMENTS[dept].label}. Odysseus: ${order.note}`);
+  }, 3400);
+}
+
+function setStatus(msg){ document.getElementById("statusLine").innerHTML = `<span class="flag">›</span> ${escapeHtml(msg)}`; }
+
+/* ---------------------------------------------------------------------
+   Voice input / output (Web Speech API — best on Chrome/Edge)
+--------------------------------------------------------------------- */
+const NATIVE = (typeof window.AndroidBridge !== "undefined");
+
+function speak(text){
+  if (NATIVE){ try{ AndroidBridge.speak(text); }catch(e){} return; }
+  if (!("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1.0;
+  window.speechSynthesis.speak(u);
+}
+
+const micBtn = document.getElementById("micBtn");
+
+if (NATIVE){
+  // Android app: phone-native speech recognizer via the Java bridge
+  micBtn.addEventListener("click", ()=>{
+    micBtn.classList.add("listening");
+    setStatus("Listening... speak your order now.");
+    AndroidBridge.startListening();
+  });
+  window.onNativeSpeechResult = (text)=>{ micBtn.classList.remove("listening"); processOrder(text); };
+  window.onNativeSpeechError  = (msg)=>{ micBtn.classList.remove("listening"); setStatus(msg); };
+} else {
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (!SpeechRecognitionCtor){
+  micBtn.title = "Voice input isn't supported in this browser — try Chrome or Edge, or just type.";
+  micBtn.addEventListener("click", ()=> setStatus("Voice input isn't supported in this browser — please type your order instead."));
+} else {
+  const recognizer = new SpeechRecognitionCtor();
+  recognizer.lang = "en-US";
+  recognizer.interimResults = false;
+  recognizer.maxAlternatives = 1;
+
+  micBtn.addEventListener("click", ()=>{
+    micBtn.classList.add("listening");
+    setStatus("Listening... speak your order now.");
+    try{ recognizer.start(); }catch(e){ /* already running */ }
+  });
+  recognizer.onresult = (event)=>{
+    const text = event.results[0][0].transcript;
+    processOrder(text);
+  };
+  recognizer.onerror = (event)=>{
+    setStatus(`Didn't catch that (${event.error}). Please try again or type your order.`);
+  };
+  recognizer.onend = ()=> micBtn.classList.remove("listening");
+}
+}
+
+/* ---------------------------------------------------------------------
+   Wire up the command bar
+--------------------------------------------------------------------- */
+document.getElementById("sendBtn").addEventListener("click", ()=>{
+  const input = document.getElementById("orderInput");
+  processOrder(input.value);
+  input.value = "";
+});
+document.getElementById("orderInput").addEventListener("keydown", (e)=>{
+  if (e.key==="Enter"){
+    const input = e.target;
+    processOrder(input.value);
+    input.value = "";
+  }
+});
+document.getElementById("summaryLink").addEventListener("click", ()=>{
+  const today = new Date().toISOString().slice(0,10);
+  const todays = orders.filter(o=>o.timestamp.startsWith(today));
+  if (todays.length===0){ alert("No orders yet today."); return; }
+  const byType = {};
+  for (const o of todays) byType[o.order_type] = (byType[o.order_type]||0)+1;
+  let msg = `Total orders today: ${todays.length}\n\n`;
+  for (const k in byType) msg += `  ${k}: ${byType[k]}\n`;
+  alert(msg);
+});
+
+loadHistory();
+setStatus(`Welcome. I'm Qantai, your AI office assistant. Give me a voice order or type one below.`);
+
+</script>
+</body>
+</html>
